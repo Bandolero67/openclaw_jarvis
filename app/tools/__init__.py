@@ -18,12 +18,24 @@ OPTIONAL
   - apis
 
 TOOL SELECTION RULE:
-  Agent soll nicht blind Tools aufrufen.
+  Agent soll nicht blind Tools aufrufen. Erst denken:
+
+  1. Brauche ich wirklich ein Tool?
+     → Task ohne Tool möglich? Direkt antworten.
   
-  1. Is the tool NECESSARY? Can the task be done without?
-  2. Is there a FASTER way to accomplish this?
-  3. Did this tool WORK before for similar tasks? (learn)
-  4. What is the SUCCESS RATE for this tool? (track)
+  2. Welches Tool ist am sichersten?
+     → Read-only zuerst: web_fetch > browser > filesystem > exec
+  
+  3. Welches Tool gibt mir den größten Hebel?
+     → web_search: breites Wissen
+     → browser: tiefe Details
+     → exec: Code/Ausführung
+  
+  4. Wie validiere ich das Ergebnis?
+     → Plausibilitätscheck
+     → Quellen-Check (offizielle Quellen)
+     → Mehrere Tools vergleichen
+     → Selbst-Widerspruch prüfen
   
   → Use best tool for the job. Not all tools every time.
 """
