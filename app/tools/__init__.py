@@ -220,3 +220,32 @@ def get_tool_stats() -> List[Dict]:
         }
         for t in sorted(TOOLS.values(), key=lambda x: x.success_rate, reverse=True)
     ]
+
+
+# ─── TOOL RESULT STANDARD ────────────────────────────────────────────────────
+
+class ToolResult:
+    """Standard tool result wrapper."""
+    def __init__(self, ok: bool, output: str, meta: dict = None):
+        self.ok = ok
+        self.output = output
+        self.meta = meta or {}
+    
+    def __repr__(self):
+        status = "✓" if self.ok else "✗"
+        return f"ToolResult({status}, {self.output[:50]}...)"
+    
+    def to_dict(self):
+        return {"ok": self.ok, "output": self.output, "meta": self.meta}
+
+
+class BaseTool:
+    """Base class for all tools."""
+    name = "base"
+    
+    def run(self, **kwargs) -> ToolResult:
+        raise NotImplementedError
+    
+    def validate(self, **kwargs) -> bool:
+        """Pre-run validation."""
+        return True
