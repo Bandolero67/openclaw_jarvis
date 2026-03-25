@@ -249,3 +249,102 @@ class BaseTool:
     def validate(self, **kwargs) -> bool:
         """Pre-run validation."""
         return True
+
+
+# ─── CONCRETE TOOLS ──────────────────────────────────────────────────────────
+
+class FileReadTool(BaseTool):
+    name = "file_read"
+    
+    def run(self, path: str) -> ToolResult:
+        try:
+            from pathlib import Path
+            content = Path(path).read_text(encoding="utf-8")
+            return ToolResult(True, content, {"path": path})
+        except Exception as e:
+            return ToolResult(False, str(e), {"path": path})
+
+
+class FileWriteTool(BaseTool):
+    name = "file_write"
+    
+    def run(self, path: str, content: str) -> ToolResult:
+        try:
+            from pathlib import Path
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+            Path(path).write_text(content, encoding="utf-8")
+            return ToolResult(True, f"Written: {path}", {"path": path})
+        except Exception as e:
+            return ToolResult(False, str(e), {"path": path})
+
+
+class ShellTool(BaseTool):
+    name = "shell"
+    
+    def run(self, command: str, timeout: int = 30) -> ToolResult:
+        try:
+            import subprocess
+            result = subprocess.run(
+                command, shell=True, capture_output=True,
+                text=True, timeout=timeout
+            )
+            output = result.stdout + result.stderr
+            return ToolResult(
+                result.returncode == 0,
+                output[:5000],  # Truncate
+                {"returncode": result.returncode, "command": command}
+            )
+        except Exception as e:
+            return ToolResult(False, str(e), {"command": command})
+
+
+class WebSearchTool(BaseTool):
+    name = "web_search"
+    
+    def run(self, query: str, max_results: int = 5) -> ToolResult:
+        try:
+            from app.services.llm import web_search
+            results = web_search(query, max_results)
+            return ToolResult(True, str(results), {"query": query, "count": len(results)})
+        except Exception as e:
+            return ToolResult(False, str(e), {"query": query})
+
+
+class WebFetchTool(BaseTool):
+    name = "web_fetch"
+    
+    def run(self, url: str, max_chars: int = 10000) -> ToolResult:
+        try:
+            import urllib.request
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                content = resp.read().decode("utf-8", errors="ignore")[:max_chars]
+            return ToolResult(True, content, {"url": url})
+        except Exception as e:
+            return ToolResult(False, str(e), {"url": url})
+
+
+class ImageTool(BaseTool):
+    name = "image"
+    
+    def run(self, path: str, prompt: str = "Describe this image in detail") -> ToolResult:
+        try:
+            from app.services.vision import analyze_image
+            result = analyze_image(path, prompt)
+            return ToolResult(True, result, {"path": path})
+        except Exception as e:
+            return ToolResult(False, str(e), {"path": path})
+
+
+# Tool registry
+TOOL_CLASSES = {
+    "file_read": FileReadTool,
+    "file_write": FileWriteTool,
+    "shell": ShellTool,
+    "web_search": WebSearchTool,
+    "web_fetch": WebFetchTool,
+    "image": ImageTool,
+}
+
+def get_tool(name: str) -> BaseTool:
+    return TOOL_CLASSES.get(name, BaseTool())()
