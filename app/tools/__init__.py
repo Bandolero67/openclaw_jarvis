@@ -278,22 +278,6 @@ class FileWriteTool(BaseTool):
             return ToolResult(False, str(e), {"path": path})
 
 
-class ShellTool(BaseTool):
-    name = "shell"
-    
-    def run(self, command: str, timeout: int = 30) -> ToolResult:
-        try:
-            import subprocess
-            result = subprocess.run(
-                command, shell=True, capture_output=True,
-                text=True, timeout=timeout
-            )
-            output = result.stdout + result.stderr
-            return ToolResult(
-                result.returncode == 0,
-                output[:5000],  # Truncate
-                {"returncode": result.returncode, "command": command}
-            )
         except Exception as e:
             return ToolResult(False, str(e), {"command": command})
 
@@ -348,3 +332,20 @@ TOOL_CLASSES = {
 
 def get_tool(name: str) -> BaseTool:
     return TOOL_CLASSES.get(name, BaseTool())()
+
+class ShellTool(BaseTool):
+    name = "shell"
+    
+    def run(self, command: str) -> ToolResult:
+        try:
+            result = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            output = (result.stdout or "") + (result.stderr or "")
+            return ToolResult(result.returncode == 0, output, {"code": result.returncode})
+        except Exception as e:
+            return ToolResult(False, str(e))
