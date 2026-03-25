@@ -281,3 +281,11 @@ def search_memory(user_id: str, query: str) -> List[Dict]:
 
 # Initialize
 init_db()
+
+# Also init vector memory if Redis available
+try:
+    from app.memory.store_vector import VectorMemory
+    _vm = VectorMemory()
+    print(f"[memory] Vector memory: {_vm.count()} items")
+except Exception as e:
+    print(f"[memory] Vector memory: not available ({e})")
